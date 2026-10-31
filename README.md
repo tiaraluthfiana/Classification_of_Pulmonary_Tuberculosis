@@ -38,18 +38,13 @@ Results
 Evaluated on the held-out test set (421 images, never used for training or validation).
 
 Metric	Value
-Accuracy	99.52%
-Precision (TB)	100.00%
-Recall / sensitivity (TB)	97.18%
-F1-score (TB)	98.57%
-ROC-AUC	0.9998
-PR-AUC	0.9991
+Accuracy	99.76%
+Precision 100.00%
+Recall 98.59%
+F1-score	99.29%
+ROC-AUC	100%
+PR-AUC	100%
 
-Confusion matrix (threshold 0.569):
-
-	Predicted Normal	Predicted Tuberculosis
-Actual Normal	350	0
-Actual Tuberculosis	2	69
 Repository contents
 File	Description
 baseline.ipynb	Data split, preprocessing, model definition, two-stage training, and evaluation
