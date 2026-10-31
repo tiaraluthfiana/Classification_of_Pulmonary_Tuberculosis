@@ -1,12 +1,11 @@
-Classification of Pulmonary Tuberculosis from Chest X-rays (Hybrid CNN-Transformer)
+**Classification of Pulmonary Tuberculosis from Chest X-rays**
 
-A deep learning system that classifies chest X-ray images as Normal or Tuberculosis using a hybrid model: a ResNet50 convolutional backbone followed by a Transformer encoder. The repository contains the training and evaluation notebook and a small Flask web app for uploading an X-ray and getting a prediction.
+A deep learning system that classifies chest X-ray images as Normal or Tuberculosis using a hybrid model: a ResNet50 convolutional backbone followed by a Self-attention mechanism. The repository contains the training and evaluation notebook and a small Flask web app for uploading an X-ray and getting a prediction.
 
-Disclaimer: This is an academic/portfolio project. It is not a medical device and must not be used for clinical diagnosis.
+**Disclaimer: This is an academic/portfolio project. It is not a medical device and must not be used for clinical diagnosis.**
 
 Dataset
-Source: Tuberculosis (TB) Chest X-ray Database on Kaggle, created for the study below.
-Original study: T. Rahman et al., "Reliable Tuberculosis Detection Using Chest X-Ray With Deep Learning, Segmentation and Visualization," IEEE Access, vol. 8, pp. 191586-191601, 2020. DOI: 10.1109/ACCESS.2020.3031384. The authors compiled the images from several public databases.
+Source: T. Rahman et al., "Reliable Tuberculosis Detection Using Chest X-Ray With Deep Learning, Segmentation and Visualization," IEEE Access, vol. 8, pp. 191586-191601, 2020. DOI: 10.1109/ACCESS.2020.3031384. The authors compiled the images from several public databases.
 Size used here: 4,200 images (3,500 Normal, 700 Tuberculosis).
 Split: 70% train / 20% validation / 10% test, random with seed 1337 (split-folders).
 Split	Normal	Tuberculosis	Total
@@ -14,7 +13,7 @@ Train	2,800	560	3,360
 Validation	700	141	841
 Test	350	71	421
 
-This project only uses the dataset from the paper. It does not reproduce the paper's methods (nine transfer-learning CNNs with U-Net lung segmentation), so the results below are not a like-for-like comparison with the paper.
+**This project only uses the dataset from the paper. It does not reproduce the paper's methods, so the results below are not a like-for-like comparison with the paper.**
 
 Model
 Component	Details
@@ -25,7 +24,7 @@ Transformer encoder	2 blocks, 4 attention heads, key dimension 64, feed-forward 
 Head	Global average pooling, Dense(128, ReLU), Dropout(0.5), Dense(1, sigmoid)
 Parameters	about 25.2 million in total
 
-Training
+**Training**
 
 Augmentation (training only): rotation up to 5 degrees, nearest fill.
 Class weights: Normal 1.0, Tuberculosis 3.0, to handle the 5:1 class imbalance.
