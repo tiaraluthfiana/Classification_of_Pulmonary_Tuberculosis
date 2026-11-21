@@ -1,86 +1,144 @@
-**Classification of Pulmonary Tuberculosis from Chest X-rays**
+# Classification of Pulmonary Tuberculosis Using a Hybrid CNN
 
-A deep learning system that classifies chest X-ray images as Normal or Tuberculosis using a hybrid model: a ResNet50 convolutional backbone followed by a Self-attention mechanism. The repository contains the training and evaluation notebook and a small Flask web app for uploading an X-ray and getting a prediction.
+A deep learning system that classifies chest X-ray images as **Normal** or **Tuberculosis (TB)**, served through a Flask web app and a JSON REST API. The research was presented at **IBITEC 2026** as *"Classification of Pulmonary Tuberculosis Using Hybrid CNN"*.
 
-**Disclaimer: This is an academic/portfolio project. It is not a medical device and must not be used for clinical diagnosis.**
+> **Disclaimer:** This project is a research and portfolio prototype for decision support. It is not a medical device and must not replace diagnosis by a qualified medical professional.
 
-Dataset
-Source: T. Rahman et al., "Reliable Tuberculosis Detection Using Chest X-Ray With Deep Learning, Segmentation and Visualization," IEEE Access, vol. 8, pp. 191586-191601, 2020. DOI: 10.1109/ACCESS.2020.3031384. The authors compiled the images from several public databases.
-Size used here: 4,200 images (3,500 Normal, 700 Tuberculosis).
-Split: 70% train / 20% validation / 10% test, random with seed 1337 (split-folders).
-Split	Normal	Tuberculosis	Total
-Train	2,800	560	3,360
-Validation	700	141	841
-Test	350	71	421
+## Screenshots
 
-**This project only uses the dataset from the paper. It does not reproduce the paper's methods, so the results below are not a like-for-like comparison with the paper.**
+| Upload | Prediction result |
+|---|---|
+| ![Upload page](docs/screenshot-upload.png) | ![Prediction result](docs/screenshot-result.png) |
 
-Model
-Component	Details
-Input	512 x 512 RGB, scaled to [0, 1]
-Backbone	ResNet50 pretrained on ImageNet (output 16 x 16 x 2048, reshaped to 256 tokens)
-Projection	Dense layer to 256 dimensions
-Transformer encoder	2 blocks, 4 attention heads, key dimension 64, feed-forward size 512, dropout 0.1
-Head	Global average pooling, Dense(128, ReLU), Dropout(0.5), Dense(1, sigmoid)
-Parameters	about 25.2 million in total
+## Highlights
 
-**Training**
+- Hybrid **CNN + self-attention** model for early TB detection from chest X-rays.
+- **99.76% accuracy, 98.59% recall, 100% precision** on the test set.
+- Web app with drag-and-drop upload, prediction, confidence score, and probability chart.
+- **REST API** (`POST /api/predict`) that returns predictions as JSON.
+- **Prediction history** stored in a database (SQLite locally, PostgreSQL with Docker).
+- Containerized with **Docker Compose** (web app + PostgreSQL).
 
-Augmentation (training only): rotation up to 5 degrees, nearest fill.
-Class weights: Normal 1.0, Tuberculosis 3.0, to handle the 5:1 class imbalance.
-Optimizer: RMSprop, batch size 16, binary cross-entropy.
-Stage 1: ResNet50 frozen, learning rate 1e-4.
-Stage 2: last 30 ResNet50 layers unfrozen, learning rate 1e-6, up to 50 epochs.
-Callbacks: early stopping (patience 5), learning-rate reduction on plateau, best-model checkpoint.
-Decision threshold: 0.569 (used for the confusion matrix, classification report, and the web app).
-Results
+## Model
 
-Evaluated on the held-out test set (421 images, never used for training or validation).
+| Item | Detail |
+|---|---|
+| Task | Binary classification: Normal vs Tuberculosis |
+| Dataset | TB Chest X-ray Database, 4,200 images in total |
+| Architecture | Hybrid CNN (ResNet-50 backbone) with a self-attention mechanism |
+| Input | RGB image, resized to 512 x 512 and scaled to [0, 1] |
+| Class imbalance | Class weighting 1:3 (limited TB data) |
+| Decision threshold | 0.569 (tuned), applied to the TB probability |
 
-Metric	Value
-Accuracy	99.76%
-Precision 100.00%
-Recall 98.59%
-F1-score	99.29%
-ROC-AUC	100%
-PR-AUC	100%
+| Metric | Result |
+|---|---|
+| Accuracy | 99.76% |
+| Recall | 98.59% |
+| Precision | 100% |
 
-Repository contents
-File	Description
-baseline.ipynb	Data split, preprocessing, model definition, two-stage training, and evaluation
-app.py	Flask app that loads the trained model and predicts on an uploaded X-ray
-How to run
+The goal is early TB detection, so recall (not missing TB cases) is tracked closely alongside accuracy and precision.
 
-1. Install dependencies
+## How it works
 
-bash
-pip install tensorflow flask pillow numpy scipy scikit-learn pandas matplotlib seaborn opencv-python split-folders
+```
+Upload X-ray (PNG/JPG) -> Resize 512x512 + normalize -> Hybrid CNN -> TB probability
+      -> threshold 0.569 -> Normal / Tuberculosis + confidence -> saved to database
+```
 
-app.py sets TF_USE_LEGACY_KERAS=1. With TensorFlow 2.16 or newer, also run pip install tf-keras.
+## Tech stack
 
-2. Train the model
+Python, TensorFlow/Keras, Flask, SQLAlchemy, PostgreSQL, Pillow, NumPy, Chart.js, Gunicorn, Docker.
 
-Download the dataset from Kaggle and unzip it.
-Open baseline.ipynb and change the dataset paths in the first cells to your own folders.
-Run all cells. The notebook saves the trained model as final_model.keras.
+## Getting started
 
-A GPU is recommended: training used 512 x 512 images and took roughly 5 minutes per epoch.
+Make sure the trained model `final_model.keras` is in the project root.
 
-3. Start the web app
+### Option 1: Docker Compose (web app + PostgreSQL)
 
-Put final_model.keras in the same folder as app.py, and make sure the templates/index.html page used by the app is present. Then run:
+```bash
+docker compose up --build
+```
 
-bash
+Open <http://localhost:5000>. Stop with `docker compose down`.
+
+### Option 2: Run locally (SQLite)
+
+```bash
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+pip install -r requirements.txt
 python app.py
+```
 
-Open http://127.0.0.1:5000, upload a chest X-ray image (up to 16 MB), and the app shows the predicted class, the confidence, and the probability for each class.
+Open <http://127.0.0.1:5000>. Set `FLASK_DEBUG=1` to enable auto-reload during development.
 
-Limitations
-The train, validation, and test sets come from a random image-level split of one dataset. The dataset has no patient identifiers, so images from the same patient or source could appear in more than one split.
-The model has not been tested on an external dataset or on images from a different hospital or X-ray machine, so real-world performance is likely lower than the scores above.
-The test set has only 71 Tuberculosis cases, so each missed case changes recall noticeably.
-The images are not lung-segmented. The model may rely on image artifacts rather than only on the lungs, which is why explainability (for example Grad-CAM) is a planned next step.
-Possible next steps
-Add Grad-CAM heatmaps to the web app to show which regions drive each prediction.
-Validate on an external chest X-ray dataset.
-Compare against plain CNN baselines (for example ResNet50 alone) to measure the contribution of the Transformer encoder.
+## Usage
+
+### Web app
+
+| Route | Description |
+|---|---|
+| `/` | Upload a chest X-ray and see the prediction, confidence, and probability chart |
+| `/history` | Last 100 predictions (time, result, confidence, source) |
+
+### REST API
+
+`POST /api/predict` with a multipart form field named `file` (PNG, JPG, or JPEG, up to 16 MB).
+
+```bash
+curl -X POST -F "file=@chest_xray.jpg" http://localhost:5000/api/predict
+```
+
+Example response:
+
+```json
+{
+  "prediction": "Tuberculosis",
+  "confidence": 98.2,
+  "probabilities": { "Normal": 1.8, "Tuberculosis": 98.2 },
+  "threshold": 0.569
+}
+```
+
+Error responses are JSON with an `error` message: `400` for a missing file or unsupported format, `500` if the image cannot be processed.
+
+## Configuration
+
+All settings are optional environment variables.
+
+| Variable | Default | Description |
+|---|---|---|
+| `DATABASE_URL` | SQLite file `predictions.db` | Database connection string (set by `docker-compose.yml` for PostgreSQL) |
+| `MODEL_PATH` | `final_model.keras` in project root | Path to the trained model |
+| `THRESHOLD` | `0.569` | Decision threshold for the TB class |
+| `IMG_SIZE` | `512` | Model input size |
+| `FLASK_DEBUG` | off | Set to `1` for development mode |
+
+## Project structure
+
+```
+.
+├── app.py                  # Flask app: web routes, REST API, model inference, database
+├── final_model.keras       # Trained hybrid CNN model
+├── requirements.txt
+├── Dockerfile
+├── docker-compose.yml      # Web app + PostgreSQL
+├── templates/
+│   ├── index.html          # Upload and result page
+│   └── history.html        # Prediction history
+└── static/
+    ├── style.css
+    ├── script.js
+    └── uploads/            # Uploaded images (not committed)
+```
+
+## Limitations
+
+- Trained and evaluated on a single public dataset; performance on images from other hospitals, devices, or populations is not validated.
+- The model outputs a probability, not a diagnosis. Results should be reviewed by a medical professional.
+- Uploaded images and prediction history are stored for demonstration purposes; do not upload real patient data or identifying information.
+
+## Author
+
+**Tiara Luthfiana Puspa Marizka**, Informatics, Telkom University Surabaya
+[LinkedIn](https://www.linkedin.com/in/tiaraluthfianaa) | [GitHub](https://github.com/tiaraluthfianaa)
