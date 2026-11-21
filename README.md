@@ -4,12 +4,6 @@ A deep learning system that classifies chest X-ray images as **Normal** or **Tub
 
 > **Disclaimer:** This project is a research and portfolio prototype for decision support. It is not a medical device and must not replace diagnosis by a qualified medical professional.
 
-## Screenshots
-
-| Upload | Prediction result |
-|---|---|
-| ![Upload page](docs/screenshot-upload.png) | ![Prediction result](docs/screenshot-result.png) |
-
 ## Highlights
 
 - Hybrid **CNN + self-attention** model for early TB detection from chest X-rays.
